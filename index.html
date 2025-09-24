@@ -79,12 +79,13 @@
         // IMPORTANT: 여기에 유효한 Gemini API 키를 입력하세요.
         // https://aistudio.google.com/app/apikey 에서 키를 발급받을 수 있습니다.
         const apiKey = "AIzaSyDTXZPNAIpm1tC0laI7AY-zV_7IqOu6Iuo";
-        const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=" + apiKey;
+        const textApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=" + apiKey;
+        const imageApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=" + apiKey;
 
         let lastAiResponse = ""; // 마지막 AI 답변을 저장할 변수
 
         // 메시지를 채팅 컨테이너에 추가하는 함수
-        function addMessage(text, sender, isSummary = false) {
+        function addMessage(content, sender, isSummary = false, isImage = false) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('flex');
             
@@ -92,30 +93,38 @@
                 messageElement.classList.add('justify-end');
                 messageElement.innerHTML = `
                     <div class="bg-blue-500 text-white p-3 rounded-xl max-w-[85%] message-container">
-                        <p>${text}</p>
+                        <p>${content}</p>
                     </div>
                 `;
             } else { // sender === 'ai'
                 messageElement.classList.add('justify-start');
-                messageElement.innerHTML = `
-                    <div class="bg-gray-200 text-gray-800 p-3 rounded-xl max-w-[85%] message-container">
-                        <p>${text}</p>
-                    </div>
-                `;
+                if (isImage) {
+                    messageElement.innerHTML = `
+                        <div class="bg-gray-200 text-gray-800 p-3 rounded-xl max-w-[85%] message-container">
+                            <img src="data:image/png;base64,${content}" alt="AI generated image" class="rounded-xl w-full h-auto">
+                        </div>
+                    `;
+                } else {
+                    messageElement.innerHTML = `
+                        <div class="bg-gray-200 text-gray-800 p-3 rounded-xl max-w-[85%] message-container">
+                            <p>${content}</p>
+                        </div>
+                    `;
+                }
             }
             chatContainer.appendChild(messageElement);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            if (sender === 'ai' && !isSummary) {
-                lastAiResponse = text;
+            if (sender === 'ai' && !isSummary && !isImage) {
+                lastAiResponse = content;
                 summarizeButton.classList.remove('hidden');
-            } else if (isSummary) {
+            } else {
                 summarizeButton.classList.add('hidden');
             }
         }
 
-        // Gemini API를 호출하여 답변을 받는 함수
-        async function getGeminiResponse(prompt, systemInstruction = null) {
+        // Gemini API를 호출하여 답변을 받는 함수 (텍스트)
+        async function getGeminiTextResponse(prompt, systemInstruction = null) {
             let retryCount = 0;
             const maxRetries = 3;
             const baseDelay = 1000;
@@ -128,20 +137,19 @@
                         systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined
                     };
 
-                    const response = await fetch(apiUrl, {
+                    const response = await fetch(textApiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
                     if (!response.ok) {
-                        // 오류 코드에 따라 더 구체적인 메시지 제공
                         let errorDetail = `Status: ${response.status} ${response.statusText}`;
                         if (response.status === 401) {
                             errorDetail = 'API 키가 유효하지 않습니다. 코드에 API 키를 올바르게 입력했는지 확인해 주세요.';
                         } else if (response.status === 403) {
                              errorDetail = 'API 키에 이 모델에 접근할 수 있는 권한이 없습니다.';
-                        } else if (response.status === 429) { // Too Many Requests
+                        } else if (response.status === 429) {
                             const delay = baseDelay * Math.pow(2, retryCount);
                             console.log(`Rate limit exceeded. Retrying in ${delay}ms...`);
                             await new Promise(res => setTimeout(res, delay));
@@ -159,6 +167,60 @@
                         return text;
                     } else {
                         throw new Error("API response did not contain expected text.");
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch from Gemini API:", error);
+                    throw error;
+                }
+            }
+            throw new Error("Failed to fetch from Gemini API after multiple retries.");
+        }
+
+        // Gemini API를 호출하여 이미지를 받는 함수
+        async function getGeminiImageResponse(prompt) {
+            let retryCount = 0;
+            const maxRetries = 3;
+            const baseDelay = 1000;
+
+            while (retryCount < maxRetries) {
+                try {
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            responseModalities: ['TEXT', 'IMAGE']
+                        }
+                    };
+
+                    const response = await fetch(imageApiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        let errorDetail = `Status: ${response.status} ${response.statusText}`;
+                        if (response.status === 401) {
+                            errorDetail = 'API 키가 유효하지 않습니다. 코드에 API 키를 올바르게 입력했는지 확인해 주세요.';
+                        } else if (response.status === 403) {
+                             errorDetail = 'API 키에 이 모델에 접근할 수 있는 권한이 없습니다.';
+                        } else if (response.status === 429) {
+                            const delay = baseDelay * Math.pow(2, retryCount);
+                            console.log(`Rate limit exceeded. Retrying in ${delay}ms...`);
+                            await new Promise(res => setTimeout(res, delay));
+                            retryCount++;
+                            continue;
+                        }
+                        const errorResponseText = await response.text();
+                        console.error("API error response:", errorResponseText);
+                        throw new Error(`API error: ${errorDetail}`);
+                    }
+
+                    const result = await response.json();
+                    const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                    if (base64Data) {
+                        return base64Data;
+                    } else {
+                        throw new Error("API response did not contain expected image data.");
                     }
                 } catch (error) {
                     console.error("Failed to fetch from Gemini API:", error);
@@ -186,8 +248,14 @@
             errorMessage.classList.add('hidden');
 
             try {
-                const aiResponseText = await getGeminiResponse(question);
-                addMessage(aiResponseText, 'ai');
+                // 사용자가 이미지 생성을 요청했는지 확인
+                if (question.includes('그림') || question.includes('이미지') || question.includes('그려줘')) {
+                    const imageBase64 = await getGeminiImageResponse(question);
+                    addMessage(imageBase64, 'ai', false, true);
+                } else {
+                    const aiResponseText = await getGeminiTextResponse(question);
+                    addMessage(aiResponseText, 'ai');
+                }
             } catch (error) {
                 errorMessage.textContent = '답변을 가져오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
                 errorMessage.classList.remove('hidden');
@@ -214,7 +282,7 @@
             const systemInstruction = "다음 텍스트를 핵심만 요약하여 한국어로 3문장 이내로 정리해 주세요.";
             
             try {
-                const summaryText = await getGeminiResponse(lastAiResponse, systemInstruction);
+                const summaryText = await getGeminiTextResponse(lastAiResponse, systemInstruction);
                 addMessage(summaryText, 'ai', true);
             } catch (error) {
                 errorMessage.textContent = '요약본을 생성하는 중 오류가 발생했습니다.';
