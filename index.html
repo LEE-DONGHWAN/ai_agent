@@ -3,132 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 학습 도구</title>
-    <!-- Tailwind CSS CDN을 사용하여 스타일링 -->
+    <title>AI 학습 도우미</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 10px; /* 모바일 화면에 맞춰 패딩 조정 */
-        }
-        .message-container {
-            word-wrap: break-word;
-            white-space: pre-wrap;
-        }
-    </style>
+    
 </head>
-<body class="bg-gray-100 p-2 sm:p-6">
-    <div class="container mx-auto max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-[95vh] w-full">
-        <!-- 헤더 섹션 -->
-        <header class="bg-blue-600 text-white p-4 sm:p-6 rounded-t-2xl">
-            <h1 class="text-2xl sm:text-3xl font-bold">AI 학습 도우미</h1>
-            <p class="text-blue-200 mt-1 text-sm sm:text-base">탐구활동에 필요한 질문을 입력하면 AI가 답변해 드립니다.ver_gpt_4o_mini</p>
-        </header>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center font-sans p-4 sm:p-6">
 
-        <!-- 대화 영역 -->
-        <div id="chat-container" class="flex-grow p-4 sm:p-6 overflow-y-auto space-y-4">
-            <!-- 초기 환영 메시지 -->
-            <div class="flex justify-start">
-                <div class="bg-gray-200 text-gray-800 p-3 rounded-xl max-w-[85%]">
-                    <p>안녕하세요! 무엇을 도와드릴까요? (예: '유사과학이란 무엇인가요?')</p>
-                </div>
-            </div>
+    <!-- Main Container -->
+    <div class="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-2xl flex flex-col min-h-[90vh]">
+        
+        <!-- Header -->
+        <div class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">AI 학습 도우미</h1>
+            <p class="text-gray-500 mt-1">궁금한 점에 대해 AI가 답해 드립니다.</p>
+            <p id="user-id-display" class="text-xs text-gray-400 mt-2"></p>
         </div>
 
-        <!-- 입력 섹션 -->
-        <div class="p-4 sm:p-6 border-t border-gray-200">
-            <div class="flex items-end space-x-2 sm:space-x-3">
-                <textarea id="question-input" rows="1" class="flex-grow resize-none rounded-xl border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="여기에 질문을 입력하세요..."></textarea>
-                <button id="submit-button" class="bg-blue-600 text-white p-3 rounded-xl shadow-md hover:bg-blue-700 transition-colors duration-200 whitespace-nowrap">
-                    보내기
-                </button>
-            </div>
-            <!-- 로딩 및 오류 메시지 -->
-            <div id="status-message" class="mt-2 text-center text-sm hidden">
-                <p id="loading-spinner" class="text-blue-500 flex items-center justify-center hidden">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    답변 생성 중...
-                </p>
-                <p id="error-message" class="text-red-500 hidden"></p>
-            </div>
-            <button id="summarize-button" class="mt-4 w-full bg-blue-500 text-white p-3 rounded-xl shadow-md hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center space-x-2 hidden">
-                ✨ 마지막 답변 요약하기
+        <!-- Chat Container -->
+        <div id="chat-container" class="flex-grow overflow-y-auto space-y-4 p-4 bg-gray-50 rounded-2xl mb-4 shadow-inner">
+            <!-- Messages will be injected here -->
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="hidden text-red-500 text-center mb-4"></div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="hidden text-center mb-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p class="text-gray-500 mt-2">답변 생성 중...</p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex justify-center space-x-2 mb-4">
+            <button id="summarize-button" class="hidden bg-purple-500 text-white p-3 rounded-full shadow-lg hover:bg-purple-600 transition-colors duration-200">
+                <span class="font-semibold">✨ 마지막 답변 요약하기</span>
             </button>
         </div>
+
+        <!-- Input Area -->
+        <div class="flex items-center space-x-3">
+            <input type="text" id="question-input" placeholder="여기에 질문을 입력하세요..." class="flex-grow p-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-sm">
+            <button id="submit-button" class="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200 transform hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                </svg>
+            </button>
+        </div>
+
     </div>
 
-    <script src="config.js"></script>
-    <script>
-        // DOM 요소 가져오기
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl p-8 shadow-2xl max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-4 text-center">API 키 입력</h2>
+            <p class="text-gray-600 mb-6 text-center">OpenAI API 키를 입력하면 대화를 시작할 수 있습니다. 입력된 키는 안전하게 저장됩니다.</p>
+            <input type="text" id="api-key-input" placeholder="여기에 API 키를 입력하세요..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+            <button id="save-key-button" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-colors duration-200">키 저장하기</button>
+            <p id="modal-error-message" class="text-red-500 text-center mt-4 hidden"></p>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Log levels for debugging
+        setLogLevel('debug');
+        
+        // Firebase global variables (DO NOT CHANGE)
+        let app = null;
+        let auth = null;
+        let db = null;
+        let userId = null;
+        let OPENAI_API_KEY = null;
+        let currentApi = 'openai';
+
+        // Initialize Firebase and Auth
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        if (Object.keys(firebaseConfig).length) {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } else {
+            console.error("Firebase config is missing.");
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                initApp();
+            } else {
+                console.log("No user is signed in. Signing in anonymously...");
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Authentication failed:", error);
+                    document.getElementById('modal-error-message').textContent = '인증 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+                    document.getElementById('modal-error-message').classList.remove('hidden');
+                }
+            }
+        });
+        
+        // Get API Key from Firestore
+        async function getApiKey() {
+            if (!db || !userId) return null;
+            
+            try {
+                const docRef = doc(db, `artifacts/${__app_id}/users/${userId}/private_settings`, "api_keys");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    return docSnap.data().openai_api_key;
+                } else {
+                    console.log("No API key found in Firestore.");
+                    return null;
+                }
+            } catch (e) {
+                console.error("Error getting API key from Firestore:", e);
+                return null;
+            }
+        }
+
+        // Save API Key to Firestore
+        async function saveApiKey(key) {
+            if (!db || !userId) return false;
+            
+            try {
+                const docRef = doc(db, `artifacts/${__app_id}/users/${userId}/private_settings`, "api_keys");
+                await setDoc(docRef, { openai_api_key: key });
+                return true;
+            } catch (e) {
+                console.error("Error saving API key to Firestore:", e);
+                return false;
+            }
+        }
+        
+        // Chat history storage
+        let chatHistoryCollection = null;
+        let chatHistory = [];
+        
+        // Initialize app functions after auth
+        function initApp() {
+            const userIdDisplay = document.getElementById('user-id-display');
+            if (userIdDisplay) {
+                 userIdDisplay.textContent = `User ID: ${userId}`;
+            }
+           
+            // Set up Firestore collection reference for chat history
+            chatHistoryCollection = collection(db, `artifacts/${__app_id}/users/${userId}/chat_history`);
+            
+            // Listen for real-time updates to chat history
+            onSnapshot(chatHistoryCollection, (snapshot) => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === "added") {
+                        const newMsg = change.doc.data();
+                        chatHistory.push(newMsg);
+                        addMessageToUI(newMsg.content, newMsg.sender);
+                    }
+                });
+            });
+            
+            // Show modal if API key is not set
+            getApiKey().then(key => {
+                if (key) {
+                    OPENAI_API_KEY = key;
+                    hideModal();
+                    addMessageToUI("API 키가 저장되었습니다. 무엇을 도와드릴까요?", 'ai');
+                } else {
+                    showModal();
+                }
+            });
+        }
+        
+        // UI logic
+        const apiKeyModal = document.getElementById('api-key-modal');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveKeyButton = document.getElementById('save-key-button');
         const chatContainer = document.getElementById('chat-container');
         const questionInput = document.getElementById('question-input');
         const submitButton = document.getElementById('submit-button');
         const loadingSpinner = document.getElementById('loading-spinner');
         const errorMessage = document.getElementById('error-message');
         const summarizeButton = document.getElementById('summarize-button');
-
-        // 모델 선택 및 API 설정
-        const currentApi = 'openai';
         
-        // API 설정 객체: 모델별 API 키와 URL을 여기에 정의
-        const apiConfigs = {
-            openai: {
-                model: "gpt-4o-mini", // GPT-4o-mini 모델 사용
-                textUrl: "https://api.openai.com/v1/chat/completions"
+        function showModal() {
+            if (apiKeyModal) {
+                 apiKeyModal.classList.remove('hidden');
+                 document.body.classList.add('overflow-hidden');
             }
-        };
-
-        let lastAiResponse = ""; // 마지막 AI 답변을 저장할 변수
-
-        // 메시지를 채팅 컨테이너에 추가하는 함수
-        function addMessage(content, sender, isSummary = false, isImage = false) {
+        }
+        
+        function hideModal() {
+            if (apiKeyModal) {
+                apiKeyModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+        
+        function addMessageToUI(content, sender, isSummary = false) {
             const messageElement = document.createElement('div');
-            messageElement.classList.add('flex');
+            messageElement.classList.add('flex', 'p-2', 'rounded-xl');
             
             if (sender === 'user') {
                 messageElement.classList.add('justify-end');
-                messageElement.innerHTML = `
-                    <div class="bg-blue-500 text-white p-3 rounded-xl max-w-[85%] message-container">
-                        <p>${content}</p>
-                    </div>
-                `;
-            } else { // sender === 'ai'
+                messageElement.innerHTML = `<div class="bg-blue-500 text-white p-3 rounded-xl max-w-[85%] message-container"><p>${content}</p></div>`;
+            } else {
                 messageElement.classList.add('justify-start');
-                if (isImage) {
-                    messageElement.innerHTML = `
-                        <div class="bg-gray-200 text-gray-800 p-3 rounded-xl max-w-[85%] message-container">
-                            <img src="data:image/png;base64,${content}" alt="AI generated image" class="rounded-xl w-full h-auto">
-                        </div>
-                    `;
-                } else {
-                    messageElement.innerHTML = `
-                        <div class="bg-gray-200 text-gray-800 p-3 rounded-xl max-w-[85%] message-container">
-                            <p>${content}</p>
-                        </div>
-                    `;
-                }
+                messageElement.innerHTML = `<div class="bg-gray-200 text-gray-800 p-3 rounded-xl max-w-[85%] message-container"><p>${content}</p></div>`;
             }
             chatContainer.appendChild(messageElement);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            if (sender === 'ai' && !isSummary && !isImage) {
+            
+            if (sender === 'ai' && !isSummary) {
                 lastAiResponse = content;
                 summarizeButton.classList.remove('hidden');
             } else {
                 summarizeButton.classList.add('hidden');
             }
         }
+        
+        // API Configuration
+        const apiConfigs = {
+            openai: {
+                model: "gpt-4o-mini",
+                textUrl: "https://api.openai.com/v1/chat/completions"
+            }
+        };
 
-        // OpenAI API로 답변을 받는 함수
+        let lastAiResponse = "";
+        
         async function getApiResponse(prompt, systemInstruction = null) {
             const config = apiConfigs[currentApi];
             let retryCount = 0;
@@ -136,9 +248,9 @@
             const baseDelay = 1000;
 
             if (!OPENAI_API_KEY) {
-                errorMessage.textContent = 'API 키가 설정되지 않았습니다. config.js 파일을 확인해 주세요.';
+                errorMessage.textContent = 'API 키가 설정되지 않았습니다. API 키를 먼저 입력해 주세요.';
                 errorMessage.classList.remove('hidden');
-                return;
+                return null;
             }
 
             while (retryCount < maxRetries) {
@@ -161,11 +273,13 @@
                         },
                         body: JSON.stringify(payload)
                     });
-
+                    
                     if (!response.ok) {
                         let errorDetail = `Status: ${response.status} ${response.statusText}`;
                         if (response.status === 401) {
                             errorDetail = 'API 키가 유효하지 않습니다. 새로운 키를 발급받아 다시 시도해 주세요.';
+                            OPENAI_API_KEY = null;
+                            showModal();
                         } else if (response.status === 403) {
                              errorDetail = 'API 키에 이 모델에 접근할 수 있는 권한이 없습니다.';
                         } else if (response.status === 429) {
@@ -196,17 +310,20 @@
             throw new Error("Failed to fetch from API after multiple retries.");
         }
 
-        // AI 에이전트에 질문을 보내는 함수
         async function sendMessage() {
             const question = questionInput.value.trim();
             if (question === '') {
                 return;
             }
 
-            addMessage(question, 'user');
+            addMessageToUI(question, 'user');
+            await addDoc(chatHistoryCollection, {
+                sender: 'user',
+                content: question,
+                timestamp: Date.now()
+            });
             questionInput.value = '';
             
-            // 로딩 스피너 표시 및 버튼 비활성화
             loadingSpinner.classList.remove('hidden');
             submitButton.disabled = true;
             questionInput.disabled = true;
@@ -215,7 +332,13 @@
 
             try {
                 const aiResponseText = await getApiResponse(question);
-                addMessage(aiResponseText, 'ai');
+                if (aiResponseText) {
+                     await addDoc(chatHistoryCollection, {
+                        sender: 'ai',
+                        content: aiResponseText,
+                        timestamp: Date.now()
+                    });
+                }
             } catch (error) {
                 errorMessage.textContent = '답변을 가져오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
                 errorMessage.classList.remove('hidden');
@@ -226,13 +349,11 @@
             }
         }
 
-        // 마지막 AI 답변을 요약하는 함수
         async function summarizeResponse() {
             if (!lastAiResponse) {
                 return;
             }
 
-            // 로딩 스피너 표시 및 버튼 비활성화
             loadingSpinner.classList.remove('hidden');
             submitButton.disabled = true;
             questionInput.disabled = true;
@@ -243,7 +364,9 @@
             
             try {
                 const summaryText = await getApiResponse(lastAiResponse, systemInstruction);
-                addMessage(summaryText, 'ai', true);
+                if (summaryText) {
+                    addMessageToUI(summaryText, 'ai', true);
+                }
             } catch (error) {
                 errorMessage.textContent = '요약본을 생성하는 중 오류가 발생했습니다.';
                 errorMessage.classList.remove('hidden');
@@ -254,21 +377,51 @@
                 summarizeButton.disabled = false;
             }
         }
-
-        // '보내기' 버튼 클릭 이벤트 리스너
-        submitButton.addEventListener('click', sendMessage);
-
-        // '요약하기' 버튼 클릭 이벤트 리스너
-        summarizeButton.addEventListener('click', summarizeResponse);
-
-        // 'Enter' 키 누를 때 메시지 보내기
-        questionInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault(); // 새 줄이 추가되는 것을 방지
-                sendMessage();
-            }
-        });
+        
+        // Event listeners
+        if (saveKeyButton) {
+            saveKeyButton.addEventListener('click', async () => {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    const isSaved = await saveApiKey(key);
+                    if (isSaved) {
+                        OPENAI_API_KEY = key;
+                        hideModal();
+                        addMessageToUI("API 키가 저장되었습니다. 무엇을 도와드릴까요?", 'ai');
+                    } else {
+                        document.getElementById('modal-error-message').textContent = '키를 저장하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
+                        document.getElementById('modal-error-message').classList.remove('hidden');
+                    }
+                } else {
+                    document.getElementById('modal-error-message').textContent = '유효한 API 키를 입력해 주세요.';
+                    document.getElementById('modal-error-message').classList.remove('hidden');
+                }
+            });
+        }
+        
+        if (submitButton) {
+             submitButton.addEventListener('click', sendMessage);
+        }
+       
+        if (summarizeButton) {
+             summarizeButton.addEventListener('click', summarizeResponse);
+        }
+       
+        if (questionInput) {
+            questionInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+        
+        // This is necessary for a file to run correctly on Canvas. Do not modify.
+        if (typeof __app_id !== 'undefined' && typeof __firebase_config !== 'undefined') {
+            console.log("Canvas environment detected. Initializing with provided config.");
+        } else {
+            console.error("Canvas environment variables (__app_id, __firebase_config) are not defined. The app may not function correctly.");
+        }
     </script>
 </body>
 </html>
-
